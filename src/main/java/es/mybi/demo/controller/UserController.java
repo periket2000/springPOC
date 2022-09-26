@@ -19,7 +19,7 @@ public class UserController {
     UserService service;
 
     @GetMapping(value = "/user/{userId}")
-    public @ResponseBody User getTestData(@PathVariable Long userId) {
+    public @ResponseBody User getUserById(@PathVariable Long userId) {
         logger.debug("Getting user by id {}", userId);
         return service.getUser(userId);
     }
