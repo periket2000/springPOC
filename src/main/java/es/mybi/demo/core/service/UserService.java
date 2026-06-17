@@ -13,4 +13,11 @@ public class UserService {
     public User getUser(Long id) {
         return userRepository.findById(id).orElse(null);
     }
+
+    public User createUser(User user) {
+        user.setUser_id(null);
+        user.setCreated_at(new java.util.Date());
+        user.setUpdated_at(new java.util.Date());
+        return userRepository.save(user);
+    }
 }

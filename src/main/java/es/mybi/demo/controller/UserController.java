@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
@@ -22,5 +24,11 @@ public class UserController {
     public @ResponseBody User getUserById(@PathVariable Long userId) {
         logger.debug("Getting user by id {}", userId);
         return service.getUser(userId);
+    }
+
+    @PostMapping(value = "/user")
+    public @ResponseBody User createUser(@RequestBody User user) {
+        logger.debug("Creating user: {}", user);
+        return service.createUser(user);
     }
 }
