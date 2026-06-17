@@ -33,3 +33,13 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+def imageName = "spring-poc"
+def imageTag = project.version
+
+tasks.register('buildImage', Exec) {
+    dependsOn build
+    group = 'Docker'
+    description = 'Build Docker image of the application'
+    commandLine 'docker', 'build', '-t', "${imageName}:${imageTag}", '-t', "${imageName}:latest", '.'
+}
