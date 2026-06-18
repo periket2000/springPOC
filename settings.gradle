@@ -1,1 +1,4 @@
-rootProject.name = 'demo'
+rootProject.name = 'spring-poc'
+include 'core'
+include 'bd-poc'
+include 'sb-poc'

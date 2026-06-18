@@ -1,0 +1,34 @@
+package es.mybi.demo.bdpoc.controller;
+
+import es.mybi.demo.bdpoc.core.entity.User;
+import es.mybi.demo.bdpoc.core.service.UserService;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class UserController {
+
+    private static final Logger logger = LogManager.getLogger(UserController.class);
+
+    @Autowired
+    UserService service;
+
+    @GetMapping(value = "/user/{userId}")
+    public @ResponseBody User getUserById(@PathVariable Long userId) {
+        logger.debug("Getting user by id {}", userId);
+        return service.getUser(userId);
+    }
+
+    @PostMapping(value = "/user")
+    public @ResponseBody User createUser(@RequestBody User user) {
+        logger.debug("Creating user: {}", user);
+        return service.createUser(user);
+    }
+}
