@@ -7,15 +7,19 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 public class ServiceBusConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceBusConsumer.class);
 
     private final ServiceBusProperties properties;
+    private final Optional<ServiceBusMessageHandler> messageHandler;
     private ServiceBusReceiverAsyncClient receiverClient;
 
-    public ServiceBusConsumer(ServiceBusProperties properties) {
+    public ServiceBusConsumer(ServiceBusProperties properties, Optional<ServiceBusMessageHandler> messageHandler) {
         this.properties = properties;
+        this.messageHandler = messageHandler;
     }
 
     public void start() {
@@ -54,7 +58,9 @@ public class ServiceBusConsumer {
                 .subscribe(message -> {
                     String body = message.getBody().toString();
                     log.info("Received message: {}", body);
-                    System.out.println("SERVICE BUS MESSAGE: " + body);
+                    messageHandler.ifPresentOrElse(
+                            handler -> handler.handleMessage(body),
+                            () -> log.info("No message handler registered — message ignored"));
                     receiverClient.complete(message).block();
                 }, error -> {
                     log.error("Error receiving message", error);

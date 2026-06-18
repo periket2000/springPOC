@@ -86,13 +86,14 @@ spring-poc/
 
 ## Cómo se usa:
 
-|Acción	|Comando |
-|Build todo	|./gradlew build |
-|Build solo bd-poc	|./gradlew :bd-poc:build |
-|Build solo sb-poc	|./gradlew :sb-poc:build |
-|Ejecutar bd-poc	|./gradlew :bd-poc:bootRun |
-|Ejecutar sb-poc	|./gradlew :sb-poc:bootRun |
-|Docker bd-poc	|docker build -f bd-poc/Dockerfile -t bd-poc:latest . |
-|Docker sb-poc	|docker build -f sb-poc/Dockerfile -t sb-poc:latest . |
+|Acción|Comando|
+|-------|--------|
+|Build todo|./gradlew build|
+|Build solo bd-poc|./gradlew :bd-poc:build|
+|Build solo sb-poc|./gradlew :sb-poc:build|
+|Ejecutar bd-poc|./gradlew :bd-poc:bootRun|
+|Ejecutar sb-poc|./gradlew :sb-poc:bootRun|
+|Docker bd-poc|docker build -f bd-poc/Dockerfile -t bd-poc:latest .|
+|Docker sb-poc|docker build -f sb-poc/Dockerfile -t sb-poc:latest .|
 
 
