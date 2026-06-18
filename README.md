@@ -1,12 +1,36 @@
-# Spring POC (Java 11)
+# Spring POC
 
-Basic concepts for Spring devel
+Multi-module Spring Boot 3.2.5 project with shared Azure ServiceBus support (receiver/sender) in `core`.
 
-- In memory test DB config.
+## Modules
 
-# Postgres DB:
+| Module | Description | Port |
+|--------|-------------|------|
+| `core` | Shared library: ServiceBus consumer, sender, auto-configuration, handler interface | — |
+| `bd-poc` | Spring Boot app with PostgreSQL | 8081 |
+| `sb-receiver-poc` | ServiceBus message receiver (queues + topics/subscriptions) | 8082 |
+| `sb-sender-poc` | Scheduled ServiceBus message sender (every 5s) | 8083 |
 
+## Prerequisites
+
+- Java 21
+- Docker (for PostgreSQL and building images)
+
+## Quick Start
+
+```bash
+# Build all modules
+./gradlew build
+
+# Run individual apps
+./gradlew :bd-poc:bootRun
+./gradlew :sb-receiver-poc:bootRun
+./gradlew :sb-sender-poc:bootRun
 ```
+
+## PostgreSQL
+
+```bash
 docker run --name postgres \
   -e POSTGRES_USER=tu_usuario \
   -e POSTGRES_PASSWORD=db_password \
@@ -16,84 +40,100 @@ docker run --name postgres \
   -d postgres:latest
 ```
 
-# Docker
+## Docker Images
 
-```
-# Construir
-docker build -t spring-poc:latest .
+```bash
+# Build all service images (bd-poc, sb-receiver-poc, sb-sender-poc)
+./gradlew buildImages
 
-# Ejecutar con defaults (necesita PostgreSQL en localhost:5432)
-docker run -p 8081:8081 spring-poc:latest
-
-# Ejecutar con variables de entorno (estilo Kubernetes)
-docker run -p 8081:8081 \
-  -e DB_URL=jdbc:postgresql://postgres-svc:5432/mydb \
-  -e DB_USERNAME=user \
-  -e DB_PASSWORD=pass \
-  spring-poc:latest
-
-# Ejecutar con acceso a localhost donde tengo postgres con docker escuchando
-docker run -p 8081:8081 \
-  -e DB_URL=jdbc:postgresql://host.docker.internal:5432/springPoc \
-  spring-poc:latest
-
-# Crear una red compartida entre docker y localhost (postgres)
-docker network create mynet
-docker network connect mynet postgres
-docker run --network=mynet -p 8081:8081 \
-  -e DB_URL=jdbc:postgresql://postgres:5432/springPoc \
-  spring-poc:latest
+# Build individual image
+docker build -f bd-poc/Dockerfile -t bd-poc:latest .
+docker build -f sb-receiver-poc/Dockerfile -t sb-receiver-poc:latest .
+docker build -f sb-sender-poc/Dockerfile -t sb-sender-poc:latest .
 ```
 
-# Fase 2: Multiproyecto
+## ServiceBus Configuration
 
-* Con el siguiente prompt:
+Auto-configuration activates when `azure.servicebus.connection-string` is set.
+
+### Properties format
+
+```properties
+azure.servicebus.connection-string=${AZURE_SERVICEBUS_CONNECTION_STRING}
+
+# Queues with simple map keys
+azure.servicebus.queues.q1.name=${QUEUE1}
+azure.servicebus.queues.q2.name=${QUEUE2}
+
+# Topics with subscription
+azure.servicebus.topics.t1.name=${TOPIC1}
+azure.servicebus.topics.t1.subscription=${SUB1}
+```
+
+### Handler convention
+
+Handlers are resolved by bean name convention `{key}Handler` (e.g. key `q1` → bean `q1Handler`). If no bean exists, `DefaultMessageHandler` prints the message to console.
+
+```java
+@Component("q1Handler")
+public class PrintMessageHandler implements ServiceBusMessageHandler {
+    @Override
+    public void handleMessage(String message) {
+        System.out.println(message);
+    }
+}
+```
+
+### Running with Docker
+
+```bash
+docker run -p 8082:8082 \
+  -e AZURE_SERVICEBUS_CONNECTION_STRING="Endpoint=sb://..." \
+  -e QUEUE1=my-queue \
+  -e QUEUE2=my-other-queue \
+  -e TOPIC1=my-topic \
+  -e SUB1=my-subscription \
+  sb-receiver-poc:latest
+```
+
+### Environment variable mapping
+
+| Property | Env var |
+|----------|---------|
+| `azure.servicebus.connection-string` | `AZURE_SERVICEBUS_CONNECTION_STRING` |
+| `azure.servicebus.queues.q1.name` | `QUEUE1` |
+| `azure.servicebus.queues.q2.name` | `QUEUE2` |
+| `azure.servicebus.topics.t1.name` | `TOPIC1` |
+| `azure.servicebus.topics.t1.subscription` | `SUB1` |
+
+## Sender
+
+`sb-sender-poc` sends `{"hola":"mundo"}` to `QUEUE1` every 5 seconds via `ServiceBusSender`.
+
+## Project Structure
 
 ```
-Vale ahora quiero hacerlo multiproyecto, es decir, lo que hay en src sera bd-poc/src... 
-y habrá un proyecto core que me permitira compartir codigo repetitivo.
-
-Luego quiero otro proyecto que sea sb-poc que en la configuración llevará el azure-servicebus-connectionString, 
-la cola o el topico y suscripcion y leera los mensajes imprimiendolos por pantalla. 
-
-Ambos proyectos se tienen que poder levantar por separado. 
-
-El codigo del servicebus tiene que estar en core, y será al importarlo en el proyecto que se le inyectaran las 
-propiedades del proyecto, de forma que pueda usarse en cualquier proyecto simplemente cambiando las propiedades.
-```
-
-* Hemos pasado el poc a multiproyecto, con la siguiente estructura:
-
-```
-spring-poc/
-├── build.gradle              # Raíz (solo configuración común)
-├── settings.gradle            # Incluye core, bd-poc, sb-poc
-├── core/                      # Librería compartida
-│   ├── build.gradle
+springPOC/
+├── build.gradle
+├── settings.gradle
+├── core/
 │   └── src/main/java/es/mybi/demo/core/servicebus/
-│       ├── ServiceBusProperties.java       # @ConfigurationProperties
-│       ├── ServiceBusConsumer.java          # Consumidor de Azure Service Bus
-│       └── ServiceBusAutoConfiguration.java # Auto-configuración Spring Boot
-├── bd-poc/                    # App Spring Boot con BD (tu código actual)
-│   ├── build.gradle
+│       ├── ServiceBusProperties.java
+│       ├── receiver/
+│       │   ├── ServiceBusConsumer.java
+│       │   ├── ServiceBusAutoConfiguration.java
+│       │   ├── ServiceBusMessageHandler.java
+│       │   └── DefaultMessageHandler.java
+│       └── sender/
+│           ├── ServiceBusSender.java
+│           └── ServiceBusSenderAutoConfiguration.java
+├── bd-poc/
 │   ├── Dockerfile
-│   └── src/                   # Código migrado con package es.mybi.demo.bdpoc.*
-└── sb-poc/                    # Nueva app para leer de Service Bus
-    ├── build.gradle
+│   └── src/
+├── sb-receiver-poc/
+│   ├── Dockerfile
+│   └── src/
+└── sb-sender-poc/
     ├── Dockerfile
-    └── src/main/resources/application.properties  # Config Azure ServiceBus
+    └── src/
 ```
-
-## Cómo se usa:
-
-|Acción|Comando|
-|-------|--------|
-|Build todo|./gradlew build|
-|Build solo bd-poc|./gradlew :bd-poc:build|
-|Build solo sb-poc|./gradlew :sb-poc:build|
-|Ejecutar bd-poc|./gradlew :bd-poc:bootRun|
-|Ejecutar sb-poc|./gradlew :sb-poc:bootRun|
-|Docker bd-poc|docker build -f bd-poc/Dockerfile -t bd-poc:latest .|
-|Docker sb-poc|docker build -f sb-poc/Dockerfile -t sb-poc:latest .|
-
-
