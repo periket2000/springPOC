@@ -1,8 +1,9 @@
-package es.mybi.demo.core.servicebus;
+package es.mybi.demo.core.servicebus.receiver;
 
 import com.azure.messaging.servicebus.ServiceBusClientBuilder;
 import com.azure.messaging.servicebus.ServiceBusReceiverAsyncClient;
 import com.azure.messaging.servicebus.models.ServiceBusReceiveMode;
+import es.mybi.demo.core.servicebus.ServiceBusProperties;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

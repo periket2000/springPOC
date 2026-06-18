@@ -1,5 +1,6 @@
-package es.mybi.demo.core.servicebus;
+package es.mybi.demo.core.servicebus.receiver;
 
+import es.mybi.demo.core.servicebus.ServiceBusProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

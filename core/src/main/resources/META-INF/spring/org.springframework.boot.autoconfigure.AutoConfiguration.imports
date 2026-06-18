@@ -1,1 +1,2 @@
-es.mybi.demo.core.servicebus.ServiceBusAutoConfiguration
+es.mybi.demo.core.servicebus.receiver.ServiceBusAutoConfiguration
+es.mybi.demo.core.servicebus.sender.ServiceBusSenderAutoConfiguration
