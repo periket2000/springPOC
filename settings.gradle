@@ -1,5 +1,5 @@
 rootProject.name = 'spring-poc'
 include 'core'
 include 'bd-poc'
-include 'sb-poc'
+include 'sb-receiver-poc'
 include 'sb-sender-poc'
